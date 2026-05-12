@@ -1,10 +1,14 @@
 let capture;
 let faceMesh;
 let faces = [];
+let earringImg;
 
 function setup() {
   // 產生全螢幕畫布
   createCanvas(windowWidth, windowHeight);
+  
+  // 載入耳環圖片
+  earringImg = loadImage('pic/acc/acc1_ring.png');
   
   // 擷取攝影機影像
   capture = createCapture(VIDEO, () => {
@@ -71,15 +75,12 @@ function drawEarring(pt, imgW, imgH) {
   let x = (pt.x / capture.width) * imgW - imgW / 2;
   let y = (pt.y / capture.height) * imgH - imgH / 2;
   
-  let circleSize = imgW * 0.015; // 耳環圓圈的大小，隨影像寬度變動
-  let spacing = circleSize * 1.5; // 圓圈之間往下排列的間距
+  // 設定耳環圖片顯示的大小，預設為影像寬度的 15% (可自行調整數值)
+  let earringSize = imgW * 0.15; 
   
-  fill(255, 255, 0); // 黃色
-  noStroke();
-  
-  // 在耳垂位置往下畫出三個圓圈
-  for (let i = 1; i <= 3; i++) {
-    circle(x, y + i * spacing, circleSize);
+  // 畫出耳環圖片，Y 座標加上 size 的 40% 往下偏移，讓耳環像掛在耳垂下方
+  if (earringImg) {
+    image(earringImg, x, y + earringSize * 0.4, earringSize, earringSize);
   }
 }
 
