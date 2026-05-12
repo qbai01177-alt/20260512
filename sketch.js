@@ -46,7 +46,7 @@ function draw() {
   noStroke();
   textAlign(CENTER, CENTER);
   textSize(32);
-  text("414730076李OO", width / 2, height * 0.1);
+  text("414730076李羿蓁", width / 2, height * 0.1);
   textSize(24);
   text("作品為影像辨識_耳環臉譜", width / 2, height * 0.1 + 40);
   
