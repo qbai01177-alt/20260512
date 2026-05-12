@@ -1,7 +1,6 @@
 let capture;
 let faceMesh;
 let faces = [];
-let isModelReady = false;
 
 function setup() {
   // 產生全螢幕畫布
@@ -9,10 +8,9 @@ function setup() {
   
   // 擷取攝影機影像
   capture = createCapture(VIDEO, () => {
-    // 確保攝影機載入後，再初始化模型
+    // 攝影機啟動後，在背景載入 AI 模型 (不會卡住畫面)
     faceMesh = ml5.faceMesh(() => {
-      isModelReady = true;
-      // 模型載入完畢後，啟動人臉特徵偵測
+      // 模型載入完成後，啟動人臉特徵偵測
       faceMesh.detectStart(capture, results => {
         faces = results;
       });
@@ -25,15 +23,14 @@ function draw() {
   // 設定畫布的背景顏色為 e7c6ff
   background('#e7c6ff');
   
-  // 如果攝影機或模型還沒準備好，顯示載入中畫面
-  if (!isModelReady || capture.width === 0) {
-    textAlign(CENTER, CENTER);
-    textSize(24);
-    fill(0);
-    noStroke();
-    text("載入攝影機與 AI 模型中，請稍候...\n\n(若一直停在此畫面，請確認：\n1. 瀏覽器是否允許存取攝影機權限\n2. 需使用 Local Server 開啟網頁，而非直接雙擊打開)", width / 2, height / 2);
-    return;
-  }
+  // 在畫布上方置中顯示標題文字
+  fill(0); // 設定文字顏色為黑色
+  noStroke();
+  textAlign(CENTER, CENTER);
+  textSize(32);
+  text("414730076李OO", width / 2, height * 0.1);
+  textSize(24);
+  text("作品為影像辨識_耳環臉譜", width / 2, height * 0.1 + 40);
   
   // 計算顯示影像的寬高，為整個畫布寬高的 50%
   let imgW = width * 0.5;
