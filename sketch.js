@@ -1,14 +1,21 @@
 let capture;
 let faceMesh;
 let faces = [];
-let earringImg;
+let handPose;
+let hands = [];
+let earrings = [];
+let currentEarring = 0; // 預設顯示第一副耳環 (index 0)
 
 function setup() {
   // 產生全螢幕畫布
   createCanvas(windowWidth, windowHeight);
   
-  // 載入耳環圖片
-  earringImg = loadImage('pic/acc/acc1_ring.png');
+  // 載入 1~5 個手勢對應的耳環圖片
+  earrings[0] = loadImage('pic/acc/acc1_ring.png');
+  earrings[1] = loadImage('pic/acc/acc2_pearl.png');
+  earrings[2] = loadImage('pic/acc/acc3_tassel.png');
+  earrings[3] = loadImage('pic/acc/acc4_jade.png');
+  earrings[4] = loadImage('pic/acc/acc5_phoenix.png');
   
   // 擷取攝影機影像
   capture = createCapture(VIDEO, () => {
@@ -17,6 +24,13 @@ function setup() {
       // 模型載入完成後，啟動人臉特徵偵測
       faceMesh.detectStart(capture, results => {
         faces = results;
+      });
+    });
+    
+    // 在背景載入 AI 手勢模型
+    handPose = ml5.handPose(() => {
+      handPose.detectStart(capture, results => {
+        hands = results;
       });
     });
   });
@@ -50,6 +64,29 @@ function draw() {
   imageMode(CENTER);
   image(capture, 0, 0, imgW, imgH);
   
+  // 如果有辨識到手勢，計算伸出的手指數量
+  if (hands.length > 0) {
+    let hand = hands[0];
+    let fingers = 0;
+    let kp = hand.keypoints;
+    
+    // 食指、中指、無名指、小拇指：判斷指尖的 y 座標是否高於(數值小於)第二關節的 y 座標
+    if (kp[8].y < kp[6].y) fingers++;
+    if (kp[12].y < kp[10].y) fingers++;
+    if (kp[16].y < kp[14].y) fingers++;
+    if (kp[20].y < kp[18].y) fingers++;
+    
+    // 大拇指：判斷指尖到小拇指根部的距離，是否大於拇指第二關節到小拇指根部的距離
+    let dTip = dist(kp[4].x, kp[4].y, kp[17].x, kp[17].y);
+    let dMcp = dist(kp[2].x, kp[2].y, kp[17].x, kp[17].y);
+    if (dTip > dMcp) fingers++;
+    
+    // 根據手指數量 1~5 切換對應圖片
+    if (fingers >= 1 && fingers <= 5) {
+      currentEarring = fingers - 1;
+    }
+  }
+  
   // 如果有辨識到臉部特徵，則繪製耳環
   if (faces.length > 0) {
     let mesh = faces[0].keypoints;
@@ -59,15 +96,16 @@ function draw() {
     let leftEarlobe = mesh[177];
     let rightEarlobe = mesh[401];
     
-    drawEarring(leftEarlobe, imgW, imgH);
-    drawEarring(rightEarlobe, imgW, imgH);
+    // 傳入 dir 參數，-1 代表左側(往-X移)，1 代表右側(往+X移)
+    drawEarring(leftEarlobe, imgW, imgH, -1);
+    drawEarring(rightEarlobe, imgW, imgH, 1);
   }
   
   pop();
 }
 
 // 繪製耳環的輔助函式
-function drawEarring(pt, imgW, imgH) {
+function drawEarring(pt, imgW, imgH, dir) {
   // 確保特徵點有值且影像已成功載入尺寸
   if (!pt || capture.width === 0 || capture.height === 0) return;
   
@@ -78,9 +116,15 @@ function drawEarring(pt, imgW, imgH) {
   // 設定耳環圖片顯示的大小，預設為影像寬度的 15% (可自行調整數值)
   let earringSize = imgW * 0.15; 
   
-  // 畫出耳環圖片，Y 座標加上 size 的 40% 往下偏移，讓耳環像掛在耳垂下方
-  if (earringImg) {
-    image(earringImg, x, y + earringSize * 0.4, earringSize, earringSize);
+  // 利用比率設定往外和往上移動的量 
+  // offsetX: 以耳環大小的 20% 往外移動
+  let offsetX = earringSize * 0.2 * dir; 
+  // offsetY: 以耳環大小的 15% 往上移動 (負值代表往上)
+  let offsetY = -earringSize * 0.15;
+  
+  // 畫出耳環圖片，並疊加上述計算出的 offsetX 與 offsetY
+  if (earrings[currentEarring]) {
+    image(earrings[currentEarring], x + offsetX, y + earringSize * 0.4 + offsetY, earringSize, earringSize);
   }
 }
 
